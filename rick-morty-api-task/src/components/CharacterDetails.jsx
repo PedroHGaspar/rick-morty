@@ -6,24 +6,32 @@ import { Link } from "react-router-dom";
 import "../App.css";
 
 const CharacterDetails = () => {
-  const { id } = useParams(); // Obtenha o 'id' da URL usando useParams
+  const { id } = useParams();
   const [character, setCharacter] = useState(null);
+  const [episodes, setEpisodes] = useState([]); // Adicione o estado para os episódios
 
   useEffect(() => {
-    // Função para buscar os detalhes do personagem na API
     const fetchCharacterDetails = async () => {
       try {
         const response = await axios.get(
           `https://rickandmortyapi.com/api/character/${id}`
         );
         setCharacter(response.data);
+
+        // Obtenha detalhes dos episódios do personagem
+        const episodeRequests = response.data.episode.map((episodeURL) =>
+          axios.get(episodeURL)
+        );
+        const episodesResponse = await Promise.all(episodeRequests);
+        const episodeData = episodesResponse.map((response) => response.data);
+        setEpisodes(episodeData);
       } catch (error) {
         console.error("Erro ao buscar detalhes do personagem:", error);
       }
     };
 
     fetchCharacterDetails();
-  }, [id]); // Certifique-se de incluir 'id' como dependência
+  }, [id]);
 
   if (!character) {
     return <div>Carregando...</div>;
@@ -43,12 +51,19 @@ const CharacterDetails = () => {
             alt={character.name}
           />
           <p className="nome-personagem-detalhes">Nome: {character.name}</p>
-          <p className="status-personagem-detalhes">
-            Status: {character.status}
-          </p>
-          <p className="status-personagem-detalhes">
-            Espécie: {character.species}
-          </p>
+          <p className="status-personagem-detalhes">Status: {character.status}</p>
+          <p className="status-personagem-detalhes">Espécie: {character.species}</p>
+          
+          <div>
+            <h2 className="detalhes-personagem">Episódios do Personagem</h2>
+            <ul className="lista-episodios">
+              {episodes.map((episode) => (
+                <li className="lista-unicos-episodios" key={episode.id}>
+                  <p className="epidosios-nomes" to={`/episode/${episode.id}`}>{episode.name} - {episode.episode}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       ) : (
         <p>Carregando...</p>
